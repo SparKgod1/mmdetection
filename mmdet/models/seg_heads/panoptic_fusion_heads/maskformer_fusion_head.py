@@ -174,6 +174,26 @@ class MaskFormerFusionHead(BasePanopticFusionHead):
         mask_pred_binary = mask_pred_binary.bool()
         bboxes = mask2bbox(mask_pred_binary)
 
+        # import cv2
+        # import numpy as np
+        # img = cv2.imread(r"D:\project\deploy\demo.jpg")
+        # for bbox, scores in zip(bboxes, det_scores):
+        #     if scores > 0.5:
+        #         box = bbox.cpu().numpy().astype(int)
+        #         cv2.rectangle(img, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+        # cv2.imshow('', img)
+        # cv2.waitKey(0)
+        # goodmask = []
+        # for scores, mask in zip(det_scores, mask_pred_binary):
+        #     if scores > 0.5:
+        #         mask = mask.cpu().numpy()
+        #         masked_img = img.copy()
+        #         masked_img[mask] = np.array([255, 0, 0])
+        #         goodmask.append(mask)
+        #         cv2.imshow('', masked_img)
+        #         cv2.waitKey(0)
+
+
         results = InstanceData()
         results.bboxes = bboxes
         results.labels = labels_per_image
