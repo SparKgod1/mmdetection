@@ -174,9 +174,10 @@ class MaskFormerFusionHead(BasePanopticFusionHead):
         mask_pred_binary = mask_pred_binary.bool()
         bboxes = mask2bbox(mask_pred_binary)
 
+        # 转换的时候把这个打开可以看到可视化结果
         # import cv2
         # import numpy as np
-        # img = cv2.imread(r"D:\project\deploy\demo.jpg")
+        # img = cv2.imread(r"D:\project\deploy\test\model_convert\segmentation\img\resized_test_img.jpg")
         # for bbox, scores in zip(bboxes, det_scores):
         #     if scores > 0.5:
         #         box = bbox.cpu().numpy().astype(int)
@@ -250,8 +251,11 @@ class MaskFormerFusionHead(BasePanopticFusionHead):
             'results are not supported yet.'
 
         results = []
-        for mask_cls_result, mask_pred_result, meta in zip(
-                mask_cls_results, mask_pred_results, batch_img_metas):
+        batch_size = mask_cls_results.shape[0]
+        for i in range(batch_size):
+            mask_cls_result = mask_cls_results[i]
+            mask_pred_result = mask_pred_results[i]
+            meta = batch_img_metas[i]
             # remove padding
             img_height, img_width = meta['img_shape'][:2]
             mask_pred_result = mask_pred_result[:, :img_height, :img_width]

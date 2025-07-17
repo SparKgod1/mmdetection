@@ -57,34 +57,35 @@ def mask2bbox(masks):
     n, h, w = masks.shape
     device = masks.device
 
-    # 生成坐标网格（确保为 Float32）
-    x = torch.arange(w, device=device, dtype=torch.float32).view(1, 1, -1)  # 强制使用 float32
-    y = torch.arange(h, device=device, dtype=torch.float32).view(1, -1, 1)  # 强制使用 float32
+    x = torch.arange(w, device=device, dtype=torch.float32).view(1, 1, -1)
+    y = torch.arange(h, device=device, dtype=torch.float32).view(1, -1, 1)
 
     x_expanded = x.expand(n, h, w)
     y_expanded = y.expand(n, h, w)
 
-    x_masked = torch.where(masks > 0, x_expanded, float('inf'))
-    y_masked = torch.where(masks > 0, y_expanded, float('inf'))
+    inf = torch.tensor(float('inf'), device=device, dtype=torch.float32)
+    neg_inf = torch.tensor(float('-inf'), device=device, dtype=torch.float32)
 
-    # 计算 min/max（保留 float32）
+    x_masked = torch.where(masks > 0, x_expanded, inf)
+    y_masked = torch.where(masks > 0, y_expanded, inf)
+
     x_min = x_masked.flatten(1).min(dim=1).values
     y_min = y_masked.flatten(1).min(dim=1).values
 
-    x_masked = torch.where(masks > 0, x_expanded, float('-inf'))
-    y_masked = torch.where(masks > 0, y_expanded, float('-inf'))
+    x_masked = torch.where(masks > 0, x_expanded, neg_inf)
+    y_masked = torch.where(masks > 0, y_expanded, neg_inf)
 
     x_max = x_masked.flatten(1).max(dim=1).values
     y_max = y_masked.flatten(1).max(dim=1).values
 
-    # 标记有效区域（bool -> float32）
-    valid_mask = masks.flatten(1).any(dim=1).float()  # 转换为 float32
+    valid_mask = masks.flatten(1).any(dim=1).float()
 
-    # 统一数据类型：两个分支均为 float32
-    zero = torch.tensor(0.0, device=device, dtype=torch.float32)  # 显式定义 float32
-    x_max = x_max * valid_mask + (x_max + 1) * (1 - valid_mask)   # 替换 torch.where
+    zero = torch.tensor(0.0, device=device, dtype=torch.float32)
+    x_max = x_max * valid_mask + (x_max + 1) * (1 - valid_mask)
     y_max = y_max * valid_mask + (y_max + 1) * (1 - valid_mask)
 
+    # 替换 inf 和 nan
     bboxes = torch.stack([x_min, y_min, x_max, y_max], dim=1)
+    bboxes = torch.where(torch.isinf(bboxes) | torch.isnan(bboxes), zero, bboxes)
     print(bboxes)
     return bboxes
